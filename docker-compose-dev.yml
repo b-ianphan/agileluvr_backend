@@ -1,0 +1,28 @@
+version: "0.0"
+
+services:
+  agileluvr-server:
+    container_name: agileluvr-server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: agileluvr-server:latest
+    depends_on:
+      - agileluvr-db
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+
+  agileluvr-db:
+    image: mongo:latest
+    container_name: agileluvr-db
+    command: mongod
+    env_file:
+      - .env
+    volumes:
+      - mongodb:/data/db
+
+volumes:
+  mongodb:
+    driver: local
