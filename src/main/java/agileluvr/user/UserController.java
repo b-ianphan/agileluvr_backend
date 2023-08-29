@@ -1,12 +1,12 @@
-package agileluvr.server.user;
+package agileluvr.user;
 
 
 import agileluvr.common.documents.UserDocument;
 import agileluvr.common.models.BasicUserModel;
 import agileluvr.common.models.ReducedUserModel;
 import agileluvr.common.models.SecureUserModel;
-import agileluvr.server.common.errors.NotAuthorizedError;
-import agileluvr.server.common.errors.UserNotFoundError;
+import agileluvr.common.errors.NotAuthorizedError;
+import agileluvr.common.errors.UserNotFoundError;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;

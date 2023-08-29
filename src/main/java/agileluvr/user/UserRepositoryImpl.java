@@ -1,4 +1,4 @@
-package agileluvr.server.user;
+package agileluvr.user;
 
 import agileluvr.common.documents.UserDocument;
 import org.springframework.beans.factory.annotation.Autowired;
