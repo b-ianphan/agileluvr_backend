@@ -14,6 +14,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.validation.constraints.NotEmpty;
+import java.util.List;
 
 
 @Document("agile-users")
@@ -36,10 +37,10 @@ public class UserDocument {
     @NotEmpty
     private String password;
 
-    @ApiModelProperty(notes = "Project user is currently part of")
-    private ProjectDocument activeProject;
+    @ApiModelProperty(notes = "ProjectId the user is currently apart of")
+    private String activeProjectID;
 
-    @ApiModelProperty(notes = "Past Projects of a user")
-    private list<ProjectDocument> previousProjects;
+    @ApiModelProperty(notes = "Past Projects ID of a user")
+    private List<String> previousProjects;
 
 }
