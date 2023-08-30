@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Data;
 import lombok.experimental.SuperBuilder;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -15,7 +16,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import javax.validation.constraints.NotEmpty;
 
 
-@Document("workout-users")
+@Document("agile-users")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -34,5 +35,11 @@ public class UserDocument {
     @ApiModelProperty(notes = "Password of the user", required = true)
     @NotEmpty
     private String password;
+
+    @ApiModelProperty(notes = "Project user is currently part of")
+    private ProjectDocument activeProject;
+
+    @ApiModelProperty(notes = "Past Projects of a user")
+    private list<ProjectDocument> previousProjects;
 
 }
