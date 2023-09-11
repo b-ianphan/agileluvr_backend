@@ -1,5 +1,6 @@
 package agileluvr.project;
 
+import agileluvr.common.documents.ProjectDocument;
 import agileluvr.common.documents.ProjectListingDocument;
 import agileluvr.common.errors.project.*;
 import agileluvr.common.errors.user.UserNotFoundError;
@@ -21,11 +22,11 @@ import static agileluvr.common.constraints.TeamSizeContraints.MINIMUM_TEAM_MEMBE
 
 @Service
 @ApiOperation("Listed Projects API")
-public class ProjectListingController {
+public class ProjectListingService {
 
     private final ProjectListingRepository projectListings;
 
-    public ProjectListingController(ProjectListingRepository projectListings){
+    public ProjectListingService(ProjectListingRepository projectListings){
         this.projectListings = projectListings;
     }
 
@@ -130,6 +131,11 @@ public class ProjectListingController {
                 .orElseThrow(() -> new ProjectDoesNotExistError(projectListingID));
 
         return currentListing.getProjectCreator().equals(uid);
+    }
+
+    public ProjectListingDocument findProject(String projectID){
+        return this.projectListings.findById(projectID)
+                .orElseThrow(()-> new ProjectDoesNotExistError(projectID));
     }
 
 

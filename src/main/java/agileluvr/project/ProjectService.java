@@ -8,16 +8,15 @@ import agileluvr.common.models.ProjectModel;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.*;
 
 
 @Service
 @ApiOperation("Started Projects API")
-public class ProjectController {
+public class ProjectService {
 
     private final ProjectRepository projects;
 
-    public ProjectController(ProjectRepository projects){ this.projects = projects; }
+    public ProjectService(ProjectRepository projects){ this.projects = projects; }
 
     public ProjectDocument createProject(@ApiParam(name ="Project Format",
                                                     value = "Project to create, based off project listing")
@@ -48,7 +47,7 @@ public class ProjectController {
         return projects.save(foundProject);
     }
 
-    @DeleteMapping()
+
     public void markAsFailure(@ApiParam(name ="Project id", value = "Project to be deleted") String projectID,
                               @ApiParam(name = "id", value = "user id") String uid){
 
@@ -67,6 +66,11 @@ public class ProjectController {
 
         return foundProject.getProjectCreator().equals(uid);
 
+    }
+
+    public ProjectDocument findProject(String projectID){
+        return this.projects.findById(projectID)
+                .orElseThrow(()-> new ProjectDoesNotExistError(projectID));
     }
 
 

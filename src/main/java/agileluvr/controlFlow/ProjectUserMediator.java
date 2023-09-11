@@ -2,19 +2,16 @@ package agileluvr.controlFlow;
 
 import agileluvr.common.documents.ProjectDocument;
 import agileluvr.common.documents.ProjectListingDocument;
-import agileluvr.common.documents.UserDocument;
 import agileluvr.common.errors.project.AlreadyHasProjectError;
 import agileluvr.common.errors.project.ProjectDoesNotExistError;
 import agileluvr.common.errors.user.UserNotFoundError;
 import agileluvr.common.errors.user.UserNotOwnerOfProjectError;
 import agileluvr.common.models.ProjectListingModel;
 import agileluvr.common.models.ProjectModel;
-import agileluvr.project.ProjectController;
-import agileluvr.project.ProjectListingController;
+import agileluvr.project.ProjectService;
+import agileluvr.project.ProjectListingService;
 import agileluvr.project.ProjectListingRepository;
-import agileluvr.project.ProjectRepository;
-import agileluvr.user.UserController;
-import agileluvr.user.UserRepository;
+import agileluvr.user.UserService;
 import io.swagger.annotations.ApiParam;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,31 +25,20 @@ import static agileluvr.common.Identifiers.ProjectIdentifier.NO_PROJECT_ASSIGNED
 @RequestMapping("/api/projectUserMediator")
 public class ProjectUserMediator {
 
-    private final UserRepository userRepository;
 
-    private final ProjectRepository projectRepository;
+    private final ProjectListingService projectListingService;
 
-    private final ProjectListingRepository projectListingRepository;
+    private final ProjectService projectService;
 
-    private final ProjectListingController projectListingController;
+    private final UserService userService;
 
-    private final ProjectController projectController;
+    public ProjectUserMediator (ProjectListingService projectListingService,
+                               ProjectService projectService,
+                               UserService userService){
 
-    private final UserController userController;
-
-    public ProjectUserMediator(UserRepository userRepository,
-                               ProjectRepository projectRepository,
-                               ProjectListingRepository projectListingRepository,
-                               ProjectListingController projectListingController,
-                               ProjectController projectController,
-                               UserController userController){
-
-        this.userRepository = userRepository;
-        this.projectRepository = projectRepository;
-        this.projectListingRepository = projectListingRepository;
-        this.projectListingController = projectListingController;
-        this.projectController = projectController;
-        this.userController = userController;
+        this.projectListingService = projectListingService;
+        this.projectService = projectService;
+        this.userService = userService;
     }
 
 
@@ -62,10 +48,10 @@ public class ProjectUserMediator {
 
         String uid = projectListing.getProjectCreator();
 
-        if(!userRepository.existsById(uid)){throw new UserNotFoundError(uid);}
-        if(userController.hasActiveProject(uid)) { throw new AlreadyHasProjectError(); }
-        ProjectListingDocument createdListing =  this.projectListingController.createListing(projectListing);
-        this.userController.changeListing(createdListing.getId(), uid);
+        if(!this.userService.exists(uid)){throw new UserNotFoundError(uid);}
+        if(userService.hasActiveProject(uid)) { throw new AlreadyHasProjectError(); }
+        ProjectListingDocument createdListing =  this.projectListingService.createListing(projectListing);
+        this.userService.changeListing(createdListing.getId(), uid);
 
         return createdListing;
     }
@@ -75,19 +61,18 @@ public class ProjectUserMediator {
     public void deleteListing(@PathVariable @ApiParam(name = "id of listed project", value = "listed project") String listingID,
                               @PathVariable @ApiParam(name = "id", value = "user id") String uid){
 
-        ProjectListingDocument foundProject = this.projectListingRepository.findById(listingID)
-                .orElseThrow(() -> new ProjectDoesNotExistError(listingID));
+        ProjectListingDocument foundProject = this.projectListingService.findProject(listingID);
 
         for(String currID: foundProject.getFrontEndMemberList()){
-            this.userController.changeListing(NO_PROJECT_ASSIGNED, currID);
+            this.userService.changeListing(NO_PROJECT_ASSIGNED, currID);
         }
 
         for(String currID: foundProject.getBackEndMemberList()){
-            this.userController.changeListing(NO_PROJECT_ASSIGNED, currID);
+            this.userService.changeListing(NO_PROJECT_ASSIGNED, currID);
         }
 
 
-        this.projectListingController.deleteListing(listingID, uid);
+        this.projectListingService.deleteListing(listingID, uid);
     }
 
 
@@ -96,8 +81,8 @@ public class ProjectUserMediator {
                                               @PathVariable @ApiParam(name = "id of listed project", value = "listed project") String listingID,
                                               @PathVariable @ApiParam(name = "user id", value = "user trying to join project") String uid) {
 
-        ProjectListingDocument listingWithAddedUser =  this.projectListingController.joinListing(teamType, listingID, uid);
-        this.userController.changeListing(listingWithAddedUser.getId(), uid);
+        ProjectListingDocument listingWithAddedUser =  this.projectListingService.joinListing(teamType, listingID, uid);
+        this.userService.changeListing(listingWithAddedUser.getId(), uid);
 
         return listingWithAddedUser;
     }
@@ -106,8 +91,8 @@ public class ProjectUserMediator {
     public ProjectListingDocument removeFromListing(@PathVariable @ApiParam(name = "id of listed project", value = "listed project") String listingID,
                                                     @PathVariable @ApiParam(name = "user id", value = "user trying to join project") String uid ){
 
-        ProjectListingDocument listingWithRemovedUser = this.projectListingController.removeFromListing(listingID, uid);
-        this.userController.changeListing(NO_PROJECT_ASSIGNED, uid);
+        ProjectListingDocument listingWithRemovedUser = this.projectListingService.removeFromListing(listingID, uid);
+        this.userService.changeListing(NO_PROJECT_ASSIGNED, uid);
 
         return listingWithRemovedUser;
     }
@@ -116,23 +101,23 @@ public class ProjectUserMediator {
     public ProjectDocument createProject(String uid, String projectListingID, @RequestBody ProjectModel projectModel){
 
         // this really isnt needed, just a catch error
-        if(!userRepository.existsById(uid)){throw new UserNotFoundError(uid);}
+        if(!this.userService.exists(uid)){throw new UserNotFoundError(uid);}
 
-        if(!projectListingController.confirmUserOwnership(projectListingID, uid)) { throw new UserNotOwnerOfProjectError(uid, projectListingID); }
+        if(!projectListingService.confirmUserOwnership(projectListingID, uid)) { throw new UserNotOwnerOfProjectError(uid, projectListingID); }
 
-        ProjectDocument createdProject = projectController.createProject(projectModel);
+        ProjectDocument createdProject = projectService.createProject(projectModel);
 
         // set people on projectlisting to have new project document ID
         for(String currID : createdProject.getFrontEndMemberList()){
-            this.userController.changeListing(createdProject.getId(), currID);
+            this.userService.changeListing(createdProject.getId(), currID);
         }
 
         for(String currID : createdProject.getBackEndMemberList()){
-            this.userController.changeListing(createdProject.getId(), currID);
+            this.userService.changeListing(createdProject.getId(), currID);
         }
 
         // delete projectlisting, no need for it anymore
-        this.projectListingController.deleteListing(projectListingID, uid);
+        this.projectListingService.deleteListing(projectListingID, uid);
 
         return createdProject;
 
@@ -142,16 +127,16 @@ public class ProjectUserMediator {
     public ProjectDocument completeProject(@PathVariable @ApiParam(name ="Project id", value = "Project to be completed") String projectID,
                                            @PathVariable @ApiParam(name = "id", value = "user id") String uid){
 
-        ProjectDocument completedProject = this.projectController.completeProject(projectID, uid);
+        ProjectDocument completedProject = this.projectService.completeProject(projectID, uid);
 
         for(String currID: completedProject.getFrontEndMemberList()){
-            this.userController.changeListing(NO_PROJECT_ASSIGNED, currID);
-            this.userController.addCompletedProject(projectID, uid);
+            this.userService.changeListing(NO_PROJECT_ASSIGNED, currID);
+            this.userService.addCompletedProject(projectID, uid);
         }
 
         for(String currID: completedProject.getBackEndMemberList()){
-            this.userController.changeListing(NO_PROJECT_ASSIGNED, currID);
-            this.userController.addCompletedProject(projectID, uid);
+            this.userService.changeListing(NO_PROJECT_ASSIGNED, currID);
+            this.userService.addCompletedProject(projectID, uid);
         }
 
 
@@ -162,22 +147,18 @@ public class ProjectUserMediator {
     public void markAsFailure(@PathVariable @ApiParam(name ="Project id", value = "Project to be deleted") String projectID,
                               @PathVariable @ApiParam(name = "id", value = "user id") String uid){
 
-        ProjectDocument foundProject = this.projectRepository.findById(projectID)
-                .orElseThrow(()-> new ProjectDoesNotExistError(projectID));
+        ProjectDocument foundProject = this.projectService.findProject(projectID);
 
         for(String currID: foundProject.getFrontEndMemberList()){
-            this.userController.changeListing(NO_PROJECT_ASSIGNED, currID);
+            this.userService.changeListing(NO_PROJECT_ASSIGNED, currID);
         }
 
         for(String currID: foundProject.getBackEndMemberList()){
-            this.userController.changeListing(NO_PROJECT_ASSIGNED, currID);
+            this.userService.changeListing(NO_PROJECT_ASSIGNED, currID);
         }
 
-        this.projectController.markAsFailure(projectID, uid);
+        this.projectService.markAsFailure(projectID, uid);
     }
 
-
-
-    // when a project listing turns int oa project, we must update every user on that project listing to have that their current porject is a new ID
 
 }
