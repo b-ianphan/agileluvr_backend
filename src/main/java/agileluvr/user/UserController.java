@@ -12,7 +12,7 @@ import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.constraints.Null;
+import static agileluvr.common.Identifiers.ProjectIdentifier.NO_PROJECT_ASSIGNED;
 
 
 @RestController
@@ -51,7 +51,7 @@ public class UserController {
     }
 
 
-    @ApiOperation(value = "Assign/Unassign", notes = "Add or remove user to/from project listing")
+    @ApiOperation(value = "Assign or Unassign", notes = "Add or remove user to/from project listing")
     @PutMapping("/{listingID}/{uid}/leave")
     public UserDocument changeListing(@PathVariable @ApiParam(name = "id of listed project", value = "listed project") String listingID,
                                       @PathVariable @ApiParam(name = "id of user", value = "user") String uid){
@@ -77,7 +77,17 @@ public class UserController {
         foundUser.getPreviousProjects().add(projectID);
 
         return users.save(foundUser);
+    }
+
+    public boolean hasActiveProject(String uid){
+
+        UserDocument foundUser = users.findById(uid)
+                .orElseThrow(() -> new UserNotFoundError(uid));
+
+        return !foundUser.getActiveProjectID().equals(NO_PROJECT_ASSIGNED);
 
     }
+
+
 
 }

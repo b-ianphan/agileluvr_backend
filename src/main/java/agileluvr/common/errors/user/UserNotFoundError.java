@@ -1,4 +1,4 @@
-package agileluvr.common.errors;
+package agileluvr.common.errors.user;
 
 public class UserNotFoundError extends RuntimeException{
     public UserNotFoundError(String userLogin) {
