@@ -9,8 +9,7 @@ import agileluvr.common.models.SecureUserModel;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
+
 
 import static agileluvr.common.Identifiers.ProjectIdentifier.NO_PROJECT_ASSIGNED;
 
