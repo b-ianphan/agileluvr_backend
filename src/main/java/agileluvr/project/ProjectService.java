@@ -7,20 +7,19 @@ import agileluvr.common.errors.user.UserNotOwnerOfProjectError;
 import agileluvr.common.models.ProjectModel;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 
 @Service
-@ApiOperation("Started Projects API")
 public class ProjectService {
 
     private final ProjectRepository projects;
 
+    @Autowired
     public ProjectService(ProjectRepository projects){ this.projects = projects; }
 
-    public ProjectDocument createProject(@ApiParam(name ="Project Format",
-                                                    value = "Project to create, based off project listing")
-                                                    ProjectModel projectModel) {
+    public ProjectDocument createProject(ProjectModel projectModel) {
 
             return projects.save(ProjectDocument.builder()
                     .projectCreator(projectModel.getProjectCreator())
@@ -28,14 +27,12 @@ public class ProjectService {
                     .projectDescription(projectModel.getProjectDescription())
                     .frontEndMemberList(projectModel.getFrontEndMemberList())
                     .backEndMemberList(projectModel.getBackEndMemberList())
-                    .projectManager(projectModel.getProjectManager())
                     .build()
             );
     }
 
 
-    public ProjectDocument completeProject(@ApiParam(name ="Project id", value = "Project to be completed") String projectID,
-                                            @ApiParam(name = "id", value = "user id") String uid){
+    public ProjectDocument completeProject(String projectID, String uid){
 
         ProjectDocument foundProject = projects.findById(projectID)
                 .orElseThrow(() -> new ProjectDoesNotExistError(projectID));
@@ -48,8 +45,7 @@ public class ProjectService {
     }
 
 
-    public void markAsFailure(@ApiParam(name ="Project id", value = "Project to be deleted") String projectID,
-                              @ApiParam(name = "id", value = "user id") String uid){
+    public void markAsFailure(String projectID,String uid){
 
         if(!projects.existsById(projectID)) { throw new ProjectDoesNotExistError(projectID); }
 
@@ -58,8 +54,7 @@ public class ProjectService {
         projects.deleteById(projectID);
     }
 
-    public boolean confirmUserOwnership(@ApiParam(name ="Project id", value = "Project") String projectID,
-                                        @ApiParam(name = "id", value = "user id") String uid){
+    public boolean confirmUserOwnership(String projectID,String uid){
 
         ProjectDocument foundProject = projects.findById(projectID)
                 .orElseThrow(() -> new ProjectDoesNotExistError(projectID));

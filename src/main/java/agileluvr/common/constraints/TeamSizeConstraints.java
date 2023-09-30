@@ -1,6 +1,6 @@
 package agileluvr.common.constraints;
 
-public class TeamSizeContraints {
+public class TeamSizeConstraints {
 
     public static final int MINIMUM_TEAM_MEMBERS = 1;
 

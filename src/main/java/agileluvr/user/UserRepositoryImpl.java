@@ -8,7 +8,10 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import javax.validation.ConstraintViolationException;
+import java.util.ArrayList;
 import java.util.Optional;
+
+import static agileluvr.common.Identifiers.ProjectIdentifier.NO_PROJECT_ASSIGNED;
 
 interface UserRepositoryInterface {
     Optional<UserDocument> findByUsernameAndPassword(String username, String password);
@@ -39,10 +42,17 @@ public class UserRepositoryImpl implements UserRepositoryInterface {
         if (password == null || password.isEmpty()) {
             throw new ConstraintViolationException("Password cannot be empty", null);
         }
+
+        if(username == null || username.isEmpty()) {
+            throw new ConstraintViolationException("Username cannot be empty", null);
+        }
+
         String hashedPassword = encoder.encode(password);
         UserDocument user = UserDocument.builder()
                 .username(username)
                 .password(hashedPassword)
+                .activeProjectID(NO_PROJECT_ASSIGNED)
+                .previousProjects(new ArrayList<>())
                 .build();
 
         return template.save(user);

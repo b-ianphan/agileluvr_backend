@@ -13,6 +13,7 @@ import agileluvr.project.ProjectListingService;
 import agileluvr.project.ProjectListingRepository;
 import agileluvr.user.UserService;
 import io.swagger.annotations.ApiParam;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import static agileluvr.common.Identifiers.ProjectIdentifier.NO_PROJECT_ASSIGNED;
@@ -32,6 +33,7 @@ public class ProjectUserMediator {
 
     private final UserService userService;
 
+    @Autowired
     public ProjectUserMediator (ProjectListingService projectListingService,
                                ProjectService projectService,
                                UserService userService){

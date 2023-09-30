@@ -1,7 +1,9 @@
 package agileluvr.common.documents;
 
 import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -12,6 +14,8 @@ import java.util.List;
 
 @Document("agile-project-listings")
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @SuperBuilder
 public class ProjectListingDocument {
 
@@ -46,11 +50,5 @@ public class ProjectListingDocument {
 
     @ApiModelProperty(notes = "IDs of members working on back end of this project", required = true)
     private List<String> backEndMemberList;
-
-    @ApiModelProperty(notes = "Will this project have a project manager?", required = true)
-    private Boolean hasProjectManager;
-
-    @ApiModelProperty(notes = "ID of Project Manager")
-    private String projectManager;
 
 }

@@ -1,13 +1,16 @@
 package agileluvr.project;
 
-import agileluvr.common.documents.ProjectDocument;
 import agileluvr.common.documents.ProjectListingDocument;
 import agileluvr.common.errors.project.*;
 import agileluvr.common.errors.user.UserNotFoundError;
 import agileluvr.common.errors.user.UserNotOwnerOfProjectError;
 import agileluvr.common.models.ProjectListingModel;
+import io.github.cdimascio.dotenv.Dotenv;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,22 +19,29 @@ import java.util.List;
 
 import static agileluvr.common.Identifiers.UserTeamIdentifier.BACK_END;
 import static agileluvr.common.Identifiers.UserTeamIdentifier.FRONT_END;
-import static agileluvr.common.constraints.TeamSizeContraints.MAXIMUM_TEAM_MEMBERS;
-import static agileluvr.common.constraints.TeamSizeContraints.MINIMUM_TEAM_MEMBERS;
+import static agileluvr.common.constraints.TeamSizeConstraints.MAXIMUM_TEAM_MEMBERS;
+import static agileluvr.common.constraints.TeamSizeConstraints.MINIMUM_TEAM_MEMBERS;
 
 
 @Service
-@ApiOperation("Listed Projects API")
 public class ProjectListingService {
 
     private final ProjectListingRepository projectListings;
 
-    public ProjectListingService(ProjectListingRepository projectListings){
-        this.projectListings = projectListings;
-    }
+    @Autowired
+    public ProjectListingService(ProjectListingRepository projectListings){this.projectListings = projectListings;}
 
-    public ProjectListingDocument createListing(@RequestBody @ApiParam(name = "Project Listing Format",
-                                                        value = "Project Listing to create") ProjectListingModel projectListing){
+
+
+    /*
+        @ApiResponse(code = 200, message = "Successfully added project to users completed list"),
+        @ApiResponse(code = 400, message = "Team size limit must be within 1-6"),
+        @ApiResponse(code = 406, message = "Invalid team type has been chosen by creator"),
+        @ApiResponse(code = 409, message = "Front end and Back end team size do not match full team size")
+     */
+
+
+    public ProjectListingDocument createListing(ProjectListingModel projectListing){
 
         if(projectListing.getTeamSizeLimit() < MINIMUM_TEAM_MEMBERS || projectListing.getTeamSizeLimit() > MAXIMUM_TEAM_MEMBERS){
             throw new TeamSizeOutOfBoundsError();
@@ -61,28 +71,39 @@ public class ProjectListingService {
                 .backEndSizeLimit(projectListing.getBackEndSizeLimit())
                 .frontEndMemberList(frontEndMemberList)
                 .backEndMemberList(backEndMemberList)
-                .hasProjectManager(projectListing.getHasProjectManager())
                 .build()
         );
 
     }
 
-    public void deleteListing(@ApiParam(name = "id of listed project", value = "listed project") String listingID,
-                              @ApiParam(name = "id", value = "user id") String uid){
+    /*
+        @ApiResponse(code = 200, message = "ProjectListing was successfully deleted"),
+        @ApiResponse(code = 403, message = "User is not Authorized to delete projectListing"),
+        @ApiResponse(code = 404, message = "ProjectListing ID does not exist")
+     */
 
+    public void deleteListing(String listingID, String uid){
         if(!this.projectListings.existsById(listingID)){ throw new ProjectDoesNotExistError(listingID);}
-
         if(!confirmUserOwnership(listingID,uid)) { throw new UserNotOwnerOfProjectError(uid, listingID);}
-
         this.projectListings.deleteById(listingID);
     }
 
-    public ProjectListingDocument joinListing(@ApiParam(name = "team user will join", value = "team choice") String teamType,
-                                              @ApiParam(name = "id of listed project", value = "listed project") String listingID,
-                                              @ApiParam(name = "user id", value = "user trying to join project") String uid){
+    /*
+        @ApiResponse(code = 200, message = "User was successfully added to listing"),
+        @ApiResponse(code = 404, message = "Project Listing ID does not exist"),
+        @ApiResponse(code = 409, message = "User is already apart of a project"),
+        @ApiResponse(code = 400, message = "Team user is attempting to join is full"),
+        @ApiResponse(code = 400, message = "Team user is attempting to join does not exist")
+     */
+
+    public ProjectListingDocument joinListing(String teamType, String listingID, String uid){
 
         ProjectListingDocument currentListing = this.projectListings.findById(listingID)
                 .orElseThrow(() -> new ProjectDoesNotExistError(listingID));
+
+        if(currentListing.getFrontEndMemberList().contains(uid) || currentListing.getBackEndMemberList().contains(uid)){
+            throw new AlreadyHasProjectError();
+        }
 
         switch (teamType){
 
@@ -124,8 +145,7 @@ public class ProjectListingService {
         return projectListings.save(currentListing);
     }
 
-    public boolean confirmUserOwnership(@ApiParam(name ="Project Listing id", value = "Project Listing") String projectListingID,
-                                        @ApiParam(name = "id", value = "user id") String uid){
+    public boolean confirmUserOwnership(String projectListingID, String uid){
 
         ProjectListingDocument currentListing = this.projectListings.findById(projectListingID)
                 .orElseThrow(() -> new ProjectDoesNotExistError(projectListingID));

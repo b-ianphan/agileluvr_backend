@@ -29,7 +29,7 @@ public class UserDocument {
     private String id;
 
     @ApiModelProperty(notes = "Username of the user", required = true)
-    @Indexed(name = "username", unique = true)
+    @Indexed(unique = true)
     @NotEmpty
     private String username;
 

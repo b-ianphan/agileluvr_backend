@@ -6,7 +6,9 @@ import agileluvr.common.errors.user.UserNotFoundError;
 import agileluvr.common.models.BasicUserModel;
 import agileluvr.common.models.ReducedUserModel;
 import agileluvr.common.models.SecureUserModel;
+import io.github.cdimascio.dotenv.Dotenv;
 import io.swagger.annotations.ApiParam;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -18,12 +20,17 @@ public class UserService {
 
     private final UserRepository users;
 
-    @Value("${agileluvr.API_SECRET}")
-    private String apiPassword;
+    //@Value("${agileluvr.API_SECRET}")
+    // idk why this gives me an error
+    private final String apiPassword = Dotenv.load().get("AGILELUVR_API_SECRET");;
 
-    public UserService(UserRepository users){ this.users = users;}
+    @Autowired
+    public UserService(UserRepository users){
+        this.users = users;
+    }
 
     public ReducedUserModel createUser(SecureUserModel user){
+
         if (user.getApiPassword() != null && user.getApiPassword().equals(this.apiPassword)) {
             UserDocument savedUser = users.saveUsernameAndPassword(user.getUsername(), user.getPassword());
             return ReducedUserModel.builder()
@@ -43,8 +50,7 @@ public class UserService {
                 .build();
     }
 
-    public UserDocument changeListing(@ApiParam(name = "id of listed project", value = "listed project") String listingID,
-                                      @ApiParam(name = "id of user", value = "user") String uid){
+    public UserDocument changeListing(String listingID, String uid){
 
         UserDocument foundUser = users.findById(uid)
                 .orElseThrow(() -> new UserNotFoundError(uid));
@@ -54,8 +60,7 @@ public class UserService {
         return users.save(foundUser);
     }
 
-    public UserDocument addCompletedProject(@ApiParam(name = "id of project", value = "completed project") String projectID,
-                                            @ApiParam(name = "id of user", value = "user") String uid){
+    public UserDocument addCompletedProject(String projectID, String uid){
 
         UserDocument foundUser = users.findById(uid)
                 .orElseThrow(() -> new UserNotFoundError(uid));
@@ -69,6 +74,10 @@ public class UserService {
 
         UserDocument foundUser = users.findById(uid)
                 .orElseThrow(() -> new UserNotFoundError(uid));
+
+        if(foundUser.getActiveProjectID() == null){
+            return false;
+        }
 
         return !foundUser.getActiveProjectID().equals(NO_PROJECT_ASSIGNED);
 

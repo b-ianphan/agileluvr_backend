@@ -28,8 +28,5 @@ public class ProjectModel {
     @ApiModelProperty(notes = "IDs of members working on back end of this project", required = true)
     private List<String> backEndMemberList;
 
-    @ApiModelProperty(notes = "ID of Project Manager, null if they dont exists ")
-    private String projectManager;
-
 
 }

@@ -42,9 +42,6 @@ public class ProjectDocument {
     @ApiModelProperty(notes = "IDs of members working on back end of this project", required = true)
     private List<String> backEndMemberList;
 
-    @ApiModelProperty(notes = "ID of Project Manager")
-    private String projectManager;
-
     @ApiModelProperty(notes = "Project can either be in progress or completed")
     private boolean inProgress;
 
